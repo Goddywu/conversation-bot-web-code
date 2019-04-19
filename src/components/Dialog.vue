@@ -1,43 +1,50 @@
 <template>
-  <div class="main">
-    <div class="left">
-      <el-form>
-        <el-form-item label="数据集" label-width='80px'>
-          <el-select @change="selectDataSet" v-model="active.dataSetPath" placeholder="请选择数据集">
-            <el-option v-for="data in dataSet" :label="data.name" :value="data.path" /> 
-          </el-select>
-        </el-form-item>
-        <el-form-item>
-          <pre style="text-align:left">{{active.dataSet}}</pre>
-        </el-form-item>
-      </el-form>
-    </div>
-    <div class="right">
-      <el-cascader
-        expand-trigger="hover"
-        :options="versionOptions"
-        v-model="active.projectIdAndVersion"
-        @change="changeVersion" />
-      <el-input v-model="active.dialogText" placeholder="请输入对话内容" />
-      <el-button icon="el-icon-message" circle @click="sendDialogText" />
-      意图猜测结果为：
-      <pre style="text-align:left">{{active.dialogResponse}}</pre>
-    </div>
+  <div>
+    <el-row>
+      <el-col :span="12">
+        请选择项目及版本：
+      </el-col>
+      <el-col :span="4">
+        <el-cascader
+          expand-trigger="hover"
+          :options="versionOptions"
+          v-model="active.projectIdAndVersion"
+          @change="changeVersion" />
+      </el-col>
+    </el-row>
+    <el-row>
+      <el-col :span="12" :offset="4">
+        <el-input v-model="active.dialogText" placeholder="请输入对话内容" />
+      </el-col>
+      <el-col :span="2">
+        <el-button icon="el-icon-message" circle @click="sendDialogText" />
+      </el-col>
+    </el-row>
+    <el-row>
+      <el-col :span="16" :offset="4">
+        <!-- <el-input class="textarea-box"
+          type="textarea"
+          :autosize="{ minRows: 2, maxRows: 20}"
+          placeholder=""
+          resize="none"
+          :disable="true"
+          v-model="active.dialogResponse">
+        </el-input> -->
+        <div class="resonse-box">
+          <pre style="text-align:left">{{active.dialogResponse}}</pre>
+        </div>
+      </el-col>
+    </el-row>
   </div>
 </template>
 
 <script>
 import axios from 'axios'
 export default {
-  name: 'HelloWorld',
-  props: {
-    msg: String
-  },
+  name: 'dialogControl',
   data() {
     return {
       host: 'http://118.31.52.226:5000',
-      dataSet: [],
-      projects: [],
       versionOptions: [],
       active: {
         dataSetPath: null,
@@ -46,14 +53,9 @@ export default {
         dialogResponse: null,
         projectIdAndVersion: []
       }
-      
     }
   },
   mounted() {
-    axios.get(this.host + '/files')
-    .then(res => {
-      this.dataSet = res.data
-    })
     this.getProjects()
   },
   methods: {
@@ -90,12 +92,14 @@ export default {
           title: '错误',
           message: '未选择项目和版本！'
         })
+        return
       }
       if (this.active.dialogText == '') {
         this.$notify.error({
           title: '错误',
           message: '未填写对话语句！'
         })
+        return
       }
 
       axios.get(this.host + '/nlu/predict', {
@@ -106,34 +110,27 @@ export default {
         }
       })
       .then(res => {
-        this.active.dialogResponse = res.data
-      })
-    },
-    selectDataSet() {
-      // axios.get(this.host + '/' + this.active.dataSetPath)
-      axios.get(this.host + '/' + './static/json/demo-rasa_zh.json')
-      .then(res => {
-        this.active.dataSet = res.data
         console.log(res.data)
+        this.active.dialogResponse = res.data
       })
     }
   }
 }
 </script>
 
-<!-- Add "scoped" attribute to limit CSS to this component only -->
-<style scoped lang="scss">
-.left, .right {
-  position: absolute;
-  width: 500px;
-  height: 600px;
+<style lang="scss" scoped>
+.resonse-box {
   display: inline-block;
+  width: 100%;
+  height: 500px;
+  overflow-y: auto;
   border: 1px solid red;
+  font-size: 14px;
 }
-.left {
-  left: 20px;
-}
-.right {
-  left: 540px;
+.el-row {
+  margin-bottom: 20px;
+  &:last-child {
+    margin-bottom: 0;
+  }
 }
 </style>
